@@ -4,94 +4,149 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Meditation Timer</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <style>
     /* General Styles */
     body {
-      font-family: Arial, sans-serif;
-      background-color: #1e1e1e;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(-45deg, #ff9a9e, #fad0c4, #a18cd1, #fbc2eb);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
       margin: 0;
-      color: #fff;
+      color: #333;
+      overflow: hidden;
+    }
+
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
     }
 
     .container {
       text-align: center;
-      background-color: #2c2c2c;
-      padding: 20px;
+      background: rgba(255, 255, 255, 0.9); /* Semi-transparent white */
+      padding: 40px;
       border-radius: 20px;
-      box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
       width: 90%;
-      max-width: 400px; /* Limits the width for larger screens */
+      max-width: 400px;
+      backdrop-filter: blur(10px);
+      animation: fadeIn 1s ease;
     }
 
-    #timer {
-      font-size: 4rem; /* Smaller font size for mobile */
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 20px;
+      color: #6a1b9a; /* Deep purple */
+      font-weight: 600;
+    }
+
+    .timer {
+      position: relative;
+      width: 250px;
+      height: 250px;
+      margin: 0 auto;
+    }
+
+    .circle {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: conic-gradient(#6a1b9a 0%, transparent 0%); /* Circular progress bar */
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-shadow: 0 0 20px rgba(106, 27, 154, 0.3);
+    }
+
+    .circle::before {
+      content: '';
+      position: absolute;
+      width: 90%;
+      height: 90%;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    #time {
+      font-size: 3.5rem; /* Bigger and bolder numbers */
       font-weight: bold;
-      color: #fff; /* White color for the timer */
-      margin: 20px 0;
+      color: #6a1b9a; /* Deep purple */
+      position: relative;
+      z-index: 1;
+      text-shadow: 0 0 10px rgba(106, 27, 154, 0.3);
     }
 
     .buttons {
       display: flex;
       justify-content: center;
-      gap: 10px; /* Smaller gap for mobile */
-      flex-wrap: wrap; /* Ensures buttons wrap on smaller screens */
+      gap: 15px;
+      margin-top: 30px;
     }
 
     button {
-      padding: 10px 20px; /* Smaller padding for mobile */
-      font-size: 1rem; /* Smaller font size for mobile */
+      padding: 12px 24px;
+      font-size: 1rem;
       color: #fff;
-      background-color: #007bff;
+      background: #6a1b9a; /* Deep purple */
       border: none;
-      border-radius: 10px;
+      border-radius: 25px;
       cursor: pointer;
-      transition: background-color 0.3s;
-      flex: 1; /* Makes buttons take equal space */
-      min-width: 80px; /* Ensures buttons don't get too small */
+      transition: all 0.3s ease;
+      box-shadow: 0 0 10px rgba(106, 27, 154, 0.3);
     }
 
     button:hover {
-      background-color: #0056b3;
+      transform: scale(1.05);
+      box-shadow: 0 0 20px rgba(106, 27, 154, 0.5);
     }
 
     button:active {
       transform: scale(0.95);
     }
 
-    #pauseBtn {
-      background-color: #ff9800;
-    }
-
-    #pauseBtn:hover {
-      background-color: #e68900;
-    }
-
-    #stopBtn {
-      background-color: #f44336;
-    }
-
-    #stopBtn:hover {
-      background-color: #d32f2f;
-    }
-
     button:disabled {
-      background-color: #666;
+      background: #ab47bc; /* Lighter purple */
       cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes ripple {
+      0% { transform: scale(0); opacity: 1; }
+      100% { transform: scale(2); opacity: 0; }
     }
 
     /* Media Queries for Smaller Screens */
     @media (max-width: 480px) {
-      #timer {
-        font-size: 3rem; /* Even smaller font size for very small screens */
+      h1 {
+        font-size: 1.8rem;
+      }
+
+      .timer {
+        width: 200px;
+        height: 200px;
+      }
+
+      #time {
+        font-size: 2.5rem;
       }
 
       button {
-        padding: 8px 16px; /* Smaller padding for very small screens */
-        font-size: 0.9rem; /* Smaller font size for very small screens */
+        padding: 10px 20px;
+        font-size: 0.9rem;
       }
     }
   </style>
@@ -99,7 +154,11 @@
 <body>
   <div class="container">
     <h1>Meditation Timer</h1>
-    <div id="timer">00:00</div>
+    <div class="timer">
+      <div class="circle">
+        <div id="time">00:00</div>
+      </div>
+    </div>
     <div class="buttons">
       <button id="startBtn">Start</button>
       <button id="pauseBtn" disabled>Pause</button>
@@ -112,7 +171,8 @@
     let seconds = 0;
     let minutes = 0;
     let isPaused = false;
-    const timerDisplay = document.getElementById('timer');
+    const timeDisplay = document.getElementById('time');
+    const circle = document.querySelector('.circle');
     const startBtn = document.getElementById('startBtn');
     const pauseBtn = document.getElementById('pauseBtn');
     const stopBtn = document.getElementById('stopBtn');
@@ -143,8 +203,11 @@
             return;
           }
           // Update the timer display
-          timerDisplay.textContent = 
+          timeDisplay.textContent = 
             `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+          // Update the circular progress bar
+          const progressPercentage = ((minutes * 60 + seconds) / 1800) * 360;
+          circle.style.background = `conic-gradient(#6a1b9a ${progressPercentage}deg, transparent ${progressPercentage}deg)`;
         }
       }, 1000); // Update every second
     }
@@ -172,11 +235,12 @@
       seconds = 0;
       minutes = 0;
       isPaused = false;
-      timerDisplay.textContent = '00:00';
+      timeDisplay.textContent = '00:00';
       startBtn.disabled = false;
       pauseBtn.disabled = true;
       stopBtn.disabled = true;
       pauseBtn.textContent = 'Pause';
+      circle.style.background = 'conic-gradient(#6a1b9a 0%, transparent 0%)';
     }
 
     startBtn.addEventListener('click', startTimer);
