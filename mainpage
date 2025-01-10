@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meditation Timer</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #1e1e1e;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      color: #fff;
+    }
+    .container {
+      text-align: center;
+      background-color: #2c2c2c;
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    }
+    #timer {
+      font-size: 6rem;
+      font-weight: bold;
+      color: #4caf50;
+      margin: 30px 0;
+    }
+    .buttons {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+    }
+    button {
+      padding: 15px 30px;
+      font-size: 1.2rem;
+      color: #fff;
+      background-color: #007bff;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    button:active {
+      transform: scale(0.95);
+    }
+    #pauseBtn {
+      background-color: #ff9800;
+    }
+    #pauseBtn:hover {
+      background-color: #e68900;
+    }
+    #stopBtn {
+      background-color: #f44336;
+    }
+    #stopBtn:hover {
+      background-color: #d32f2f;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Meditation Timer</h1>
+    <div id="timer">00:00</div>
+    <div class="buttons">
+      <button id="startBtn">Start</button>
+      <button id="pauseBtn">Pause</button>
+      <button id="stopBtn">Stop</button>
+    </div>
+  </div>
+
+  <script>
+    let timerInterval;
+    let seconds = 0;
+    let minutes = 0;
+    let isPaused = false;
+    const timerDisplay = document.getElementById('timer');
+    const startBtn = document.getElementById('startBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const stopBtn = document.getElementById('stopBtn');
+
+    function startTimer() {
+      if (isPaused) {
+        isPaused = false;
+      } else {
+        seconds = 0;
+        minutes = 0;
+      }
+      startBtn.disabled = true;
+      pauseBtn.disabled = false;
+      stopBtn.disabled = false;
+
+      timerInterval = setInterval(() => {
+        if (!isPaused) {
+          seconds++;
+          if (seconds === 60) {
+            seconds = 0;
+            minutes++;
+          }
+          if (minutes === 30) {
+            clearInterval(timerInterval);
+            alert('30 minutes completed!');
+            resetTimer();
+            return;
+          }
+          timerDisplay.textContent = 
+            `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+      }, 1000);
+    }
+
+    function pauseTimer() {
+      isPaused = true;
+      startBtn.disabled = false;
+      pauseBtn.disabled = true;
+    }
+
+    function stopTimer() {
+      clearInterval(timerInterval);
+      resetTimer();
+    }
+
+    function resetTimer() {
+      seconds = 0;
+      minutes = 0;
+      isPaused = false;
+      timerDisplay.textContent = '00:00';
+      startBtn.disabled = false;
+      pauseBtn.disabled = true;
+      stopBtn.disabled = true;
+    }
+
+    startBtn.addEventListener('click', startTimer);
+    pauseBtn.addEventListener('click', pauseTimer);
+    stopBtn.addEventListener('click', stopTimer);
+  </script>
+</body>
+</html>
