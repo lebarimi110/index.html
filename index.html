@@ -2,16 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Meditation Timer</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <style>
     /* General Styles */
     body {
       font-family: 'Poppins', sans-serif;
-      background: linear-gradient(-45deg, #ff9a9e, #fad0c4, #a18cd1, #fbc2eb);
-      background-size: 400% 400%;
-      animation: gradientBG 15s ease infinite;
+      background: linear-gradient(135deg, #e0f7fa, #b2ebf2); /* Soft blue gradient */
       display: flex;
       justify-content: center;
       align-items: center;
@@ -19,18 +17,13 @@
       margin: 0;
       color: #333;
       overflow: hidden;
-    }
-
-    @keyframes gradientBG {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
+      -webkit-tap-highlight-color: transparent; /* Remove tap highlight */
     }
 
     .container {
       text-align: center;
       background: rgba(255, 255, 255, 0.9); /* Semi-transparent white */
-      padding: 40px;
+      padding: 20px;
       border-radius: 20px;
       box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
       width: 90%;
@@ -42,14 +35,14 @@
     h1 {
       font-size: 2rem;
       margin-bottom: 20px;
-      color: #6a1b9a; /* Deep purple */
+      color: #00796b; /* Dark teal */
       font-weight: 600;
     }
 
     .timer {
       position: relative;
-      width: 250px;
-      height: 250px;
+      width: 200px;
+      height: 200px;
       margin: 0 auto;
     }
 
@@ -57,12 +50,12 @@
       width: 100%;
       height: 100%;
       border-radius: 50%;
-      background: conic-gradient(#6a1b9a 0%, transparent 0%); /* Circular progress bar */
+      background: conic-gradient(#00796b 0%, transparent 0%); /* Circular progress bar */
       position: relative;
       display: flex;
       justify-content: center;
       align-items: center;
-      box-shadow: 0 0 20px rgba(106, 27, 154, 0.3);
+      box-shadow: 0 0 20px rgba(0, 121, 107, 0.2);
     }
 
     .circle::before {
@@ -76,12 +69,11 @@
     }
 
     #time {
-      font-size: 3.5rem; /* Bigger and bolder numbers */
+      font-size: 3rem; /* Bigger and bolder numbers */
       font-weight: bold;
-      color: #6a1b9a; /* Deep purple */
+      color: #00796b; /* Dark teal */
       position: relative;
       z-index: 1;
-      text-shadow: 0 0 10px rgba(106, 27, 154, 0.3);
     }
 
     .buttons {
@@ -95,17 +87,18 @@
       padding: 12px 24px;
       font-size: 1rem;
       color: #fff;
-      background: #6a1b9a; /* Deep purple */
+      background: #00796b; /* Dark teal */
       border: none;
       border-radius: 25px;
       cursor: pointer;
       transition: all 0.3s ease;
-      box-shadow: 0 0 10px rgba(106, 27, 154, 0.3);
+      box-shadow: 0 0 10px rgba(0, 121, 107, 0.3);
+      user-select: none; /* Prevent text selection */
     }
 
     button:hover {
       transform: scale(1.05);
-      box-shadow: 0 0 20px rgba(106, 27, 154, 0.5);
+      box-shadow: 0 0 20px rgba(0, 121, 107, 0.5);
     }
 
     button:active {
@@ -113,7 +106,7 @@
     }
 
     button:disabled {
-      background: #ab47bc; /* Lighter purple */
+      background: #aed581; /* Lighter green */
       cursor: not-allowed;
       box-shadow: none;
     }
@@ -124,11 +117,6 @@
       to { opacity: 1; }
     }
 
-    @keyframes ripple {
-      0% { transform: scale(0); opacity: 1; }
-      100% { transform: scale(2); opacity: 0; }
-    }
-
     /* Media Queries for Smaller Screens */
     @media (max-width: 480px) {
       h1 {
@@ -136,8 +124,8 @@
       }
 
       .timer {
-        width: 200px;
-        height: 200px;
+        width: 150px;
+        height: 150px;
       }
 
       #time {
@@ -207,7 +195,7 @@
             `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
           // Update the circular progress bar
           const progressPercentage = ((minutes * 60 + seconds) / 1800) * 360;
-          circle.style.background = `conic-gradient(#6a1b9a ${progressPercentage}deg, transparent ${progressPercentage}deg)`;
+          circle.style.background = `conic-gradient(#00796b ${progressPercentage}deg, transparent ${progressPercentage}deg)`;
         }
       }, 1000); // Update every second
     }
@@ -240,7 +228,7 @@
       pauseBtn.disabled = true;
       stopBtn.disabled = true;
       pauseBtn.textContent = 'Pause';
-      circle.style.background = 'conic-gradient(#6a1b9a 0%, transparent 0%)';
+      circle.style.background = 'conic-gradient(#00796b 0%, transparent 0%)';
     }
 
     startBtn.addEventListener('click', startTimer);
