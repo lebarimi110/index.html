@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -117,6 +117,35 @@
       box-shadow: none;
     }
 
+    .duration-control {
+      margin-top: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .duration-control label {
+      font-size: 1rem;
+      color: #00796b;
+    }
+
+    .duration-control input {
+      width: 60px;
+      padding: 8px;
+      font-size: 1rem;
+      text-align: center;
+      border: 2px solid #00796b;
+      border-radius: 10px;
+      color: #00796b;
+      background: rgba(255, 255, 255, 0.8);
+      outline: none;
+    }
+
+    .duration-control input:focus {
+      border-color: #004d40;
+    }
+
     @keyframes fadeIn {
       from { opacity: 0; }
       to { opacity: 1; }
@@ -133,11 +162,17 @@
         padding: 10px 20px;
         font-size: 0.9rem;
       }
+      .container {
+        padding: 15px;
+      }
+      .buttons {
+        flex-direction: column;
+        gap: 10px;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="gradient-bg"></div>
   <div class="container">
     <h1>Meditation Timer</h1>
     <div class="timer">
@@ -146,12 +181,22 @@
         <div id="time">00:00</div>
       </div>
     </div>
+    <div class="duration-control">
+      <label for="durationInput">Duration (minutes):</label>
+      <input type="number" id="durationInput" min="1" max="60" value="30">
+    </div>
     <div class="buttons">
       <button id="startBtn">Start</button>
       <button id="pauseBtn" disabled>Pause</button>
       <button id="stopBtn" disabled>Stop</button>
     </div>
   </div>
+
+  <!-- Sound Effect -->
+  <audio id="wokeUpSound">
+    <source src="https://assets.mixkit.co/sfx/preview/mixkit-alarm-tone-996.mp3" type="audio/mpeg">
+    Your browser does not support the audio element.
+  </audio>
 
   <script>
     let timerInterval;
@@ -164,13 +209,30 @@
     const startBtn = document.getElementById('startBtn');
     const pauseBtn = document.getElementById('pauseBtn');
     const stopBtn = document.getElementById('stopBtn');
+    const durationInput = document.getElementById('durationInput');
+    const wokeUpSound = document.getElementById('wokeUpSound');
 
-    function generateRandomNumber() {
-      const randomNum = Math.floor(Math.random() * 99) + 1;
-      return String(randomNum).padStart(2, '0');
+    function updateRandomNumber() {
+      const cycleSecond = seconds % 10; // Get the current second in the 10-second cycle
+      if (cycleSecond === 0 && seconds !== 0) {
+        randomNumberDisplay.textContent = "WOKE UP!"; // Display "WOKE UP!" at the 10th second
+        randomNumberDisplay.style.fontSize = '2.5rem'; // Adjust font size for "WOKE UP!"
+        randomNumberDisplay.style.transform = 'translateY(0)'; // Center the text
+        wokeUpSound.play(); // Play the sound effect
+      } else {
+        randomNumberDisplay.textContent = String(cycleSecond).padStart(2, '0'); // Display 00 to 09
+        randomNumberDisplay.style.fontSize = '5rem'; // Reset font size
+        randomNumberDisplay.style.transform = 'translateY(-15%)'; // Reset position
+      }
     }
 
     function startTimer() {
+      const duration = parseInt(durationInput.value) || 30; // Default to 30 minutes if no input
+      if (duration < 1 || duration > 60) {
+        alert('Please enter a duration between 1 and 60 minutes.');
+        return;
+      }
+
       startBtn.disabled = true;
       pauseBtn.disabled = false;
       stopBtn.disabled = false;
@@ -180,16 +242,19 @@
       }
 
       let startTime = Date.now() - (seconds * 1000 + minutes * 60000);
-      
+      randomNumberDisplay.textContent = '00'; // Start with 00
+      randomNumberDisplay.style.fontSize = '5rem'; // Reset font size
+      randomNumberDisplay.style.transform = 'translateY(-15%)'; // Reset position
+
       function updateTimer() {
         if (!isPaused) {
           const elapsedTime = Date.now() - startTime;
           seconds = Math.floor((elapsedTime / 1000) % 60);
           minutes = Math.floor((elapsedTime / 60000));
-          
-          if (minutes >= 30) {
+
+          if (minutes >= duration) {
             clearInterval(timerInterval);
-            alert('30 minutes completed!');
+            alert(`${duration} minutes completed!`);
             resetTimer();
             return;
           }
@@ -197,25 +262,18 @@
           timeDisplay.textContent = 
             `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 
-          const progressPercentage = (elapsedTime / 1800000) * 360;
+          const progressPercentage = (elapsedTime / (duration * 60000)) * 360;
           circle.style.background = `conic-gradient(#00796b ${progressPercentage}deg, transparent ${progressPercentage}deg)`;
-          
-          // Update random number with a smoother transition
-          if (seconds !== lastSecond) {
-            randomNumberDisplay.textContent = generateRandomNumber();
-            lastSecond = seconds;
-          }
+
+          updateRandomNumber(); // Update the number every second
         }
       }
 
-      let lastSecond = seconds;
-      timerInterval = setInterval(updateTimer, 100); // Update more frequently for smoother animation
+      timerInterval = setInterval(updateTimer, 100);
     }
 
     function pauseTimer() {
       if (isPaused) {
-        // When resuming, adjust the start time to maintain the correct elapsed time
-        startTime = Date.now() - (seconds * 1000 + minutes * 60000);
         isPaused = false;
         pauseBtn.textContent = 'Pause';
         startTimer();
@@ -237,6 +295,8 @@
       isPaused = false;
       timeDisplay.textContent = '00:00';
       randomNumberDisplay.textContent = '00';
+      randomNumberDisplay.style.fontSize = '5rem'; // Reset font size
+      randomNumberDisplay.style.transform = 'translateY(-15%)'; // Reset position
       startBtn.disabled = false;
       pauseBtn.disabled = true;
       stopBtn.disabled = true;
