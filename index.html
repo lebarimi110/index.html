@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Meditation Timer</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <!-- Firebase App (the core Firebase SDK) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.2/firebase-app-compat.min.js"></script>
+  <!-- Firebase Authentication -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.2/firebase-auth-compat.min.js"></script>
+  <!-- Firebase Database -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.2/firebase-firestore-compat.min.js"></script>
   <style>
     body {
       font-family: 'Poppins', sans-serif;
@@ -12,10 +18,9 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100vh;
+      min-height: 100vh;
       margin: 0;
       color: #00796b;
-      overflow: hidden;
       -webkit-tap-highlight-color: transparent;
     }
 
@@ -29,6 +34,42 @@
       max-width: 400px;
       backdrop-filter: blur(10px);
       animation: fadeIn 1s ease;
+    }
+
+    .auth-container {
+      margin-bottom: 20px;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .history-container {
+      margin-top: 20px;
+      max-height: 200px;
+      overflow-y: auto;
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.5);
+      border-radius: 10px;
+    }
+
+    .history-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px;
+      border-bottom: 1px solid #e0e0e0;
+      font-size: 0.9rem;
     }
 
     .timer {
@@ -45,7 +86,6 @@
       background: conic-gradient(#00796b 0%, transparent 0%);
       position: relative;
       display: flex;
-      flex-direction: column;
       justify-content: center;
       align-items: center;
       box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
@@ -61,24 +101,12 @@
       box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
     }
 
-    #randomNumber {
-      font-size: 5rem;
-      font-weight: bold;
-      color: #00796b;
-      position: relative;
-      z-index: 1;
-      margin-bottom: -10px;
-      transform: translateY(-15%);
-      line-height: 1;
-    }
-
     #time {
-      font-size: 2.5rem;
+      font-size: 3rem;
       font-weight: bold;
       color: #00796b;
       position: relative;
       z-index: 1;
-      transform: translateY(15%);
       line-height: 1;
     }
 
@@ -100,6 +128,10 @@
       transition: all 0.3s ease;
       box-shadow: 0 0 10px rgba(0, 121, 107, 0.3);
       user-select: none;
+    }
+
+    .google-sign-in {
+      background: #db4437;
     }
 
     button:hover {
@@ -142,21 +174,14 @@
       outline: none;
     }
 
-    .duration-control input:focus {
-      border-color: #004d40;
-    }
-
     @keyframes fadeIn {
       from { opacity: 0; }
       to { opacity: 1; }
     }
 
     @media (max-width: 480px) {
-      #randomNumber {
-        font-size: 3.5rem;
-      }
       #time {
-        font-size: 2rem;
+        font-size: 2.5rem;
       }
       button {
         padding: 10px 20px;
@@ -174,10 +199,22 @@
 </head>
 <body>
   <div class="container">
+    <div class="auth-container">
+      <div id="userSection" style="display: none;">
+        <div class="user-info">
+          <img id="userAvatar" class="user-avatar" src="" alt="User avatar">
+          <span id="userName"></span>
+        </div>
+        <button id="signOutBtn">Sign Out</button>
+      </div>
+      <div id="loginSection">
+        <button id="googleSignIn" class="google-sign-in">Sign in with Google</button>
+      </div>
+    </div>
+
     <h1>Meditation Timer</h1>
     <div class="timer">
       <div class="circle">
-        <div id="randomNumber">00</div>
         <div id="time">00:00</div>
       </div>
     </div>
@@ -190,44 +227,121 @@
       <button id="pauseBtn" disabled>Pause</button>
       <button id="stopBtn" disabled>Stop</button>
     </div>
+
+    <div id="historyContainer" class="history-container" style="display: none;">
+      <h2>Meditation History</h2>
+      <div id="historyList"></div>
+    </div>
   </div>
 
-  <!-- Sound Effect -->
-  <audio id="wokeUpSound">
-    <source src="https://assets.mixkit.co/sfx/preview/mixkit-alarm-tone-996.mp3" type="audio/mpeg">
-    Your browser does not support the audio element.
-  </audio>
-
   <script>
+    // Firebase configuration
+    const firebaseConfig = {
+      // You'll need to replace these with your Firebase project credentials
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_AUTH_DOMAIN",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_STORAGE_BUCKET",
+      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // Authentication elements
+    const userSection = document.getElementById('userSection');
+    const loginSection = document.getElementById('loginSection');
+    const userAvatar = document.getElementById('userAvatar');
+    const userName = document.getElementById('userName');
+    const googleSignIn = document.getElementById('googleSignIn');
+    const signOutBtn = document.getElementById('signOutBtn');
+    const historyContainer = document.getElementById('historyContainer');
+    const historyList = document.getElementById('historyList');
+
+    // Timer elements
     let timerInterval;
     let seconds = 0;
     let minutes = 0;
     let isPaused = false;
     const timeDisplay = document.getElementById('time');
-    const randomNumberDisplay = document.getElementById('randomNumber');
     const circle = document.querySelector('.circle');
     const startBtn = document.getElementById('startBtn');
     const pauseBtn = document.getElementById('pauseBtn');
     const stopBtn = document.getElementById('stopBtn');
     const durationInput = document.getElementById('durationInput');
-    const wokeUpSound = document.getElementById('wokeUpSound');
 
-    function updateRandomNumber() {
-      const cycleSecond = seconds % 10; // Get the current second in the 10-second cycle
-      if (cycleSecond === 0 && seconds !== 0) {
-        randomNumberDisplay.textContent = "WOKE UP!"; // Display "WOKE UP!" at the 10th second
-        randomNumberDisplay.style.fontSize = '2.5rem'; // Adjust font size for "WOKE UP!"
-        randomNumberDisplay.style.transform = 'translateY(0)'; // Center the text
-        wokeUpSound.play(); // Play the sound effect
+    // Authentication state observer
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        // User is signed in
+        userSection.style.display = 'block';
+        loginSection.style.display = 'none';
+        historyContainer.style.display = 'block';
+        userAvatar.src = user.photoURL;
+        userName.textContent = user.displayName;
+        loadMeditationHistory();
       } else {
-        randomNumberDisplay.textContent = String(cycleSecond).padStart(2, '0'); // Display 00 to 09
-        randomNumberDisplay.style.fontSize = '5rem'; // Reset font size
-        randomNumberDisplay.style.transform = 'translateY(-15%)'; // Reset position
+        // User is signed out
+        userSection.style.display = 'none';
+        loginSection.style.display = 'block';
+        historyContainer.style.display = 'none';
       }
+    });
+
+    // Google Sign-in
+    googleSignIn.addEventListener('click', () => {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      auth.signInWithPopup(provider);
+    });
+
+    // Sign out
+    signOutBtn.addEventListener('click', () => {
+      auth.signOut();
+    });
+
+    // Load meditation history
+    async function loadMeditationHistory() {
+      if (!auth.currentUser) return;
+
+      const historiesRef = db.collection('meditation_history')
+        .where('userId', '==', auth.currentUser.uid)
+        .orderBy('timestamp', 'desc')
+        .limit(10);
+
+      const snapshot = await historiesRef.get();
+      historyList.innerHTML = '';
+
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const date = new Date(data.timestamp.toDate());
+        const historyItem = document.createElement('div');
+        historyItem.className = 'history-item';
+        historyItem.innerHTML = `
+          <span>${date.toLocaleDateString()}</span>
+          <span>${data.duration} minutes</span>
+        `;
+        historyList.appendChild(historyItem);
+      });
+    }
+
+    // Save meditation session
+    async function saveMeditationSession(duration) {
+      if (!auth.currentUser) return;
+
+      await db.collection('meditation_history').add({
+        userId: auth.currentUser.uid,
+        duration: duration,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      loadMeditationHistory();
     }
 
     function startTimer() {
-      const duration = parseInt(durationInput.value) || 30; // Default to 30 minutes if no input
+      const duration = parseInt(durationInput.value) || 30;
       if (duration < 1 || duration > 60) {
         alert('Please enter a duration between 1 and 60 minutes.');
         return;
@@ -242,9 +356,6 @@
       }
 
       let startTime = Date.now() - (seconds * 1000 + minutes * 60000);
-      randomNumberDisplay.textContent = '00'; // Start with 00
-      randomNumberDisplay.style.fontSize = '5rem'; // Reset font size
-      randomNumberDisplay.style.transform = 'translateY(-15%)'; // Reset position
 
       function updateTimer() {
         if (!isPaused) {
@@ -254,6 +365,9 @@
 
           if (minutes >= duration) {
             clearInterval(timerInterval);
+            if (auth.currentUser) {
+              saveMeditationSession(duration);
+            }
             alert(`${duration} minutes completed!`);
             resetTimer();
             return;
@@ -264,8 +378,6 @@
 
           const progressPercentage = (elapsedTime / (duration * 60000)) * 360;
           circle.style.background = `conic-gradient(#00796b ${progressPercentage}deg, transparent ${progressPercentage}deg)`;
-
-          updateRandomNumber(); // Update the number every second
         }
       }
 
@@ -294,9 +406,6 @@
       minutes = 0;
       isPaused = false;
       timeDisplay.textContent = '00:00';
-      randomNumberDisplay.textContent = '00';
-      randomNumberDisplay.style.fontSize = '5rem'; // Reset font size
-      randomNumberDisplay.style.transform = 'translateY(-15%)'; // Reset position
       startBtn.disabled = false;
       pauseBtn.disabled = true;
       stopBtn.disabled = true;
