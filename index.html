@@ -60,12 +60,26 @@
       box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
     }
 
-    #time {
-      font-size: 3rem;
-      font-weight: bold;
-      color: #00796b;
+    .time-display {
       position: relative;
       z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    #time {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #00796b;
+      line-height: 1;
+    }
+
+    #secondCounter {
+      font-size: 5rem;
+      font-weight: bold;
+      color: #00796b;
       line-height: 1;
     }
 
@@ -74,6 +88,7 @@
       justify-content: center;
       gap: 15px;
       margin-top: 30px;
+      flex-wrap: wrap;
     }
 
     button {
@@ -102,6 +117,12 @@
       background: #aed581;
       cursor: not-allowed;
       box-shadow: none;
+    }
+
+    #resetCounterBtn {
+      background: #4db6ac;
+      font-size: 0.9rem;
+      padding: 8px 16px;
     }
 
     .duration-control {
@@ -140,7 +161,10 @@
 
     @media (max-width: 480px) {
       #time {
-        font-size: 2.5rem;
+        font-size: 1.8rem;
+      }
+      #secondCounter {
+        font-size: 4rem;
       }
       button {
         padding: 10px 20px;
@@ -161,7 +185,10 @@
     <h1>Meditation Timer</h1>
     <div class="timer">
       <div class="circle">
-        <div id="time">00:00</div>
+        <div class="time-display">
+          <div id="time">00:00</div>
+          <div id="secondCounter">00</div>
+        </div>
       </div>
     </div>
     <div class="duration-control">
@@ -172,19 +199,24 @@
       <button id="startBtn">Start</button>
       <button id="pauseBtn" disabled>Pause</button>
       <button id="stopBtn" disabled>Stop</button>
+      <button id="resetCounterBtn" disabled>Reset Counter</button>
     </div>
   </div>
 
   <script>
     let timerInterval;
+    let secondCounterInterval;
     let seconds = 0;
     let minutes = 0;
+    let secondCount = 0;
     let isPaused = false;
     const timeDisplay = document.getElementById('time');
+    const secondCounter = document.getElementById('secondCounter');
     const circle = document.querySelector('.circle');
     const startBtn = document.getElementById('startBtn');
     const pauseBtn = document.getElementById('pauseBtn');
     const stopBtn = document.getElementById('stopBtn');
+    const resetCounterBtn = document.getElementById('resetCounterBtn');
     const durationInput = document.getElementById('durationInput');
 
     function startTimer() {
@@ -197,12 +229,19 @@
       startBtn.disabled = true;
       pauseBtn.disabled = false;
       stopBtn.disabled = false;
+      resetCounterBtn.disabled = false;
 
       if (timerInterval) {
         clearInterval(timerInterval);
       }
 
+      if (secondCounterInterval) {
+        clearInterval(secondCounterInterval);
+      }
+
       let startTime = Date.now() - (seconds * 1000 + minutes * 60000);
+      secondCount = 0;
+      updateSecondCounter();
 
       function updateTimer() {
         if (!isPaused) {
@@ -212,6 +251,7 @@
 
           if (minutes >= duration) {
             clearInterval(timerInterval);
+            clearInterval(secondCounterInterval);
             alert(`${duration} minutes completed!`);
             resetTimer();
             return;
@@ -225,7 +265,15 @@
         }
       }
 
+      function updateSecondCounter() {
+        if (!isPaused) {
+          secondCount = (secondCount + 1) % 100;
+          secondCounter.textContent = String(secondCount).padStart(2, '0');
+        }
+      }
+
       timerInterval = setInterval(updateTimer, 100);
+      secondCounterInterval = setInterval(updateSecondCounter, 1000);
     }
 
     function pauseTimer() {
@@ -237,29 +285,42 @@
         isPaused = true;
         pauseBtn.textContent = 'Resume';
         clearInterval(timerInterval);
+        clearInterval(secondCounterInterval);
+        secondCount = 0;
+        secondCounter.textContent = '00';
       }
     }
 
     function stopTimer() {
       clearInterval(timerInterval);
+      clearInterval(secondCounterInterval);
       resetTimer();
     }
 
     function resetTimer() {
       seconds = 0;
       minutes = 0;
+      secondCount = 0;
       isPaused = false;
       timeDisplay.textContent = '00:00';
+      secondCounter.textContent = '00';
       startBtn.disabled = false;
       pauseBtn.disabled = true;
       stopBtn.disabled = true;
+      resetCounterBtn.disabled = true;
       pauseBtn.textContent = 'Pause';
       circle.style.background = 'conic-gradient(#00796b 0%, transparent 0%)';
+    }
+
+    function resetSecondCounter() {
+      secondCount = 0;
+      secondCounter.textContent = '00';
     }
 
     startBtn.addEventListener('click', startTimer);
     pauseBtn.addEventListener('click', pauseTimer);
     stopBtn.addEventListener('click', stopTimer);
+    resetCounterBtn.addEventListener('click', resetSecondCounter);
   </script>
 </body>
 </html>
